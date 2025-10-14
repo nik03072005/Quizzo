@@ -1,0 +1,18 @@
+{
+  "folders": [
+    {
+      "name": "Quizzo Frontend",
+      "path": "./frontend"
+    },
+    {
+      "name": "Quizzo Backend", 
+      "path": "./backend"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "eslint.workingDirectories": ["frontend"],
+    "typescript.validate.enable": true,
+    "typescript.suggest.autoImports": true
+  }
+}

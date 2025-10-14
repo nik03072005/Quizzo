@@ -1,7 +1,18 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "eslint.workingDirectories": ["frontend"],
+  "typescript.preferences.includePathsInAutoImports": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.expo": true,
+    "**/backend": false
+  },
+  "typescript.tsc.autoDetect": "off",
+  "typescript.disableAutomaticTypeAcquisition": false,
+  "files.exclude": {
+    "**/tsconfig.json": false
   }
 }
