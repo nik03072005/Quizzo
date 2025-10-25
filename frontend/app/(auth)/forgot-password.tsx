@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { normalizePhoneNumber } from '@/utils/phoneUtils';
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState(''); // Can be email or phone
   const [isLoading, setIsLoading] = useState(false);
   const { forgotPassword } = useAuth();
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      alert('Please enter your email address');
+    if (!identifier) {
+      alert('Please enter your email address or phone number');
       return;
     }
 
     setIsLoading(true);
     try {
-      await forgotPassword(email);
+      const normalizedIdentifier = normalizePhoneNumber(identifier);
+      await forgotPassword(normalizedIdentifier);
       // Navigate to OTP verification screen
       router.push({
         pathname: '/(auth)/otp-verification',
-        params: { email, type: 'forgot-password' }
+        params: { identifier: normalizedIdentifier, type: 'forgot-password' }
       });
     } catch (error: any) {
       alert(error.message || 'Failed to send reset code. Please try again.');
@@ -33,49 +35,48 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-[#f5ede2]" edges={['top']}>
+      <ScrollView className="flex-grow pb-5" showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity className="ml-5 mt-2.5 w-10 h-10 bg-white rounded-full items-center justify-center" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E1E1E" />
         </TouchableOpacity>
 
         {/* Content */}
-        <View style={styles.content}>
-        <Text style={styles.title}>Forgot Password?</Text>
-        <Text style={styles.subtitle}>
-          Don&apos;t worry! It occurs. Please enter the email address linked with your account.
+        <View className="px-7">
+        <Text className="text-[28px] font-bold text-[#1E1E1E] mb-3">Forgot Password?</Text>
+        <Text className="text-[15px] text-[#8391A1] leading-[22px] mb-[35px]">
+          Don&apos;t worry! it occurs. Please enter the email address linked with your account.
         </Text>
 
-        {/* Email Input */}
-        <View style={styles.inputContainer}>
+        {/* Email/Phone Input */}
+        <View className="mb-6">
           <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#8B8B8B"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
+            className="bg-[#F7F8F9] border border-[#E8ECF4] rounded-lg px-[18px] py-4 text-[15px] text-[#1E1E1E]"
+            placeholder="Enter your email or phone no."
+            placeholderTextColor="#8391A1"
+            value={identifier}
+            onChangeText={setIdentifier}
             autoCapitalize="none"
           />
         </View>
 
         {/* Send Code Button */}
         <TouchableOpacity
-          style={[styles.sendButton, isLoading && styles.disabledButton]}
+          className={`rounded-lg py-4 items-center mb-[35px] ${isLoading ? 'bg-gray-300' : 'bg-[#5548E8]'}`}
           onPress={handleForgotPassword}
           disabled={isLoading}
         >
-          <Text style={styles.sendButtonText}>
+          <Text className="text-white text-[15px] font-semibold">
             {isLoading ? 'Sending...' : 'Send Code'}
           </Text>
         </TouchableOpacity>
 
         {/* Remember Password */}
-        <View style={styles.rememberContainer}>
-          <Text style={styles.rememberText}>Remember Password? </Text>
+        <View className="flex-row justify-center items-center">
+          <Text className="text-[#1E1E1E] text-sm">Remember Password? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.loginLink}>Login Now</Text>
+            <Text className="text-[#35C2C1] text-sm font-bold">Login Now</Text>
           </TouchableOpacity>
         </View>
         </View>
@@ -84,80 +85,3 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5ede2',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  backButton: {
-    marginLeft: 20,
-    marginTop: 10,
-    width: 40,
-    height: 40,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    paddingHorizontal: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E1E1E',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8B8B8B',
-    lineHeight: 22,
-    marginBottom: 35,
-  },
-  inputContainer: {
-    marginBottom: 25,
-  },
-  input: {
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 15,
-    color: '#1E1E1E',
-  },
-  sendButton: {
-    backgroundColor: '#4d61de',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 35,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  sendButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  rememberContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rememberText: {
-    color: '#1E1E1E',
-    fontSize: 14,
-  },
-  loginLink: {
-    color: '#35C2C1',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});

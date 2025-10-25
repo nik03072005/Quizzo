@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons, FontAwesome, AntDesign } from '@expo/vector-icons';
+import { normalizePhoneNumber } from '@/utils/phoneUtils';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState(''); // Can be email or phone
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!identifier || !password) {
       alert('Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email, password);
+      const normalizedIdentifier = normalizePhoneNumber(identifier);
+      await login(normalizedIdentifier, password);
       router.replace('/(tabs)');
     } catch (error: any) {
       alert(error.message || 'Login failed. Please try again.');
@@ -31,96 +33,100 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-[#f5ede2]" edges={['top']}>
+      <ScrollView className="flex-grow pb-5" showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity 
+          className="ml-5 mt-2.5 w-10 h-10 bg-white rounded-full items-center justify-center"
+          onPress={() => router.back()}
+        >
           <Ionicons name="arrow-back" size={24} color="#1E1E1E" />
         </TouchableOpacity>
 
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back! Glad{'\n'}To See You, Again!</Text>
+        <View className="px-7 pt-7 pb-12">
+          <Text className="text-3xl font-bold text-gray-900 leading-9">
+            Welcome Back! Glad{'\n'}To See You, Again!
+          </Text>
         </View>
 
         {/* Form */}
-        <View style={styles.form}>
-          {/* Email Input */}
-          <View style={styles.inputContainer}>
+        <View className="px-7 pb-10">
+          {/* Email/Phone Input */}
+          <View className="relative mb-4">
             <TextInput
-              style={styles.input}
-              placeholder="Enter your email and Phone no."
-              placeholderTextColor="#A8A8A8"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
+              className="bg-[#F7F8F9] border border-[#E8ECF4] rounded-lg px-4 py-4 text-base text-gray-900"
+              placeholder="Enter your email or phone no."
+              placeholderTextColor="#8391A1"
+              value={identifier}
+              onChangeText={setIdentifier}
               autoCapitalize="none"
             />
           </View>
 
           {/* Password Input */}
-          <View style={styles.inputContainer}>
+          <View className="relative mb-4">
             <TextInput
-              style={styles.input}
+              className="bg-[#F7F8F9] border border-[#E8ECF4] rounded-lg px-4 py-4 text-base text-gray-900 pr-12"
               placeholder="Enter your password"
-              placeholderTextColor="#A8A8A8"
+              placeholderTextColor="#8391A1"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity
-              style={styles.eyeIcon}
+              className="absolute right-4 top-4"
               onPress={() => setShowPassword(!showPassword)}
             >
               <Ionicons 
                 name={showPassword ? 'eye-outline' : 'eye-off-outline'} 
                 size={22} 
-                color="#A8A8A8" 
+                color="#8391A1" 
               />
             </TouchableOpacity>
           </View>
 
           {/* Forgot Password */}
           <TouchableOpacity
-            style={styles.forgotPassword}
+            className="self-end mb-7 mt-1"
             onPress={() => router.push('/(auth)/forgot-password')}
           >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            <Text className="text-gray-900 text-sm font-medium">Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Login Button */}
           <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.disabledButton]}
+            className={`bg-[#5548E8] rounded-lg py-4 items-center mb-9 ${isLoading ? 'opacity-60' : ''}`}
             onPress={handleLogin}
             disabled={isLoading}
           >
-            <Text style={styles.loginButtonText}>
+            <Text className="text-white text-base font-semibold">
               {isLoading ? 'Logging in...' : 'Login'}
             </Text>
           </TouchableOpacity>
 
           {/* Or Login with */}
-          <View style={styles.orContainer}>
-            <View style={styles.orLine} />
-            <Text style={styles.orText}>Or Login with</Text>
-            <View style={styles.orLine} />
+          <View className="flex-row items-center mb-6">
+            <View className="flex-1 h-px bg-[#E8E8E8]" />
+            <Text className="mx-4 text-gray-500 text-sm">Or Login with</Text>
+            <View className="flex-1 h-px bg-[#E8E8E8]" />
           </View>
 
           {/* Social Login Buttons */}
-          <View style={styles.socialContainer}>
-            <TouchableOpacity style={styles.socialButton}>
+          <View className="flex-row justify-evenly mb-25 px-5">
+            <TouchableOpacity className="bg-white border border-[#E8E8E8] rounded-lg flex-1 mx-2 h-14 items-center justify-center">
               <FontAwesome name="facebook-f" size={20} color="#1877F2" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity className="bg-white border border-[#E8E8E8] rounded-lg flex-1 mx-2 h-14 items-center justify-center">
               <AntDesign name="google" size={20} color="#DB4437" />
             </TouchableOpacity>
           </View>
 
           {/* Register Link */}
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Don&apos;t have an account? </Text>
+          <View className="flex-row justify-center items-center mt-20">
+            <Text className="text-gray-900 text-sm">Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.registerLink}>Register Now</Text>
+              <Text className="text-[#35C2C1] text-sm font-bold">Register Now</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -128,129 +134,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5ede2',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  backButton: {
-    marginLeft: 20,
-    marginTop: 10,
-    width: 40,
-    height: 40,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    paddingHorizontal: 28,
-    paddingTop: 30,
-    paddingBottom: 50,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E1E1E',
-    lineHeight: 36,
-  },
-  form: {
-    paddingHorizontal: 28,
-    paddingBottom: 40,
-  },
-  inputContainer: {
-    position: 'relative',
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 15,
-    color: '#1E1E1E',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 18,
-    top: 16,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 30,
-    marginTop: 5,
-  },
-  forgotPasswordText: {
-    color: '#1E1E1E',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  loginButton: {
-    backgroundColor: '#4d61de',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 35,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E8E8E8',
-  },
-  orText: {
-    marginHorizontal: 16,
-    color: '#6A707C',
-    fontSize: 13,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginBottom: 100,
-    paddingHorizontal: 20,
-  },
-  socialButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 10,
-    height: 55,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerText: {
-    color: '#1E1E1E',
-    fontSize: 14,
-  },
-  registerLink: {
-    color: '#35C2C1',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});

@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ResetPasswordScreen() {
-  const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
+  const { identifier, email, code } = useLocalSearchParams<{ identifier?: string; email?: string; code: string }>();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { resetPassword } = useAuth();
+
+  // Use identifier if available, otherwise fall back to email for backward compatibility
+  const currentIdentifier = identifier || email || '';
 
   const handleResetPassword = async () => {
     if (!password || !confirmPassword) {
@@ -32,7 +35,7 @@ export default function ResetPasswordScreen() {
 
     setIsLoading(true);
     try {
-      await resetPassword(email, code, password);
+      await resetPassword(currentIdentifier, code, password);
       // Show success message and navigate to login
       alert('Password changed successfully!');
       router.replace('/(auth)/login');
@@ -45,71 +48,71 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-[#f5ede2]" edges={['top']}>
+      <ScrollView className="flex-grow pb-5" showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity className="ml-5 mt-2.5 w-10 h-10 bg-white rounded-full items-center justify-center" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E1E1E" />
         </TouchableOpacity>
 
         {/* Content */}
-        <View style={styles.content}>
-        <Text style={styles.title}>Create New Password</Text>
-        <Text style={styles.subtitle}>
+        <View className="px-7">
+        <Text className="text-[28px] font-bold text-[#1E1E1E] mb-3">Create New Password</Text>
+        <Text className="text-[15px] text-[#8391A1] leading-[22px] mb-[35px]">
           Your new password must be unique from those previously used.
         </Text>
 
           {/* Password Input */}
-          <View style={styles.inputContainer}>
+          <View className="relative mb-4">
             <TextInput
-              style={styles.input}
+              className="bg-[#F7F8F9] border border-[#E8ECF4] rounded-lg px-[18px] py-4 text-[15px] text-[#1E1E1E] pr-16"
               placeholder="New Password"
-              placeholderTextColor="#A8A8A8"
+              placeholderTextColor="#8391A1"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity
-              style={styles.eyeIcon}
+              className="absolute right-[18px] top-4"
               onPress={() => setShowPassword(!showPassword)}
             >
               <Ionicons 
                 name={showPassword ? 'eye-outline' : 'eye-off-outline'} 
                 size={22} 
-                color="#A8A8A8" 
+                color="#8391A1" 
               />
             </TouchableOpacity>
           </View>
 
           {/* Confirm Password Input */}
-          <View style={styles.inputContainer}>
+          <View className="relative mb-4">
             <TextInput
-              style={styles.input}
+              className="bg-[#F7F8F9] border border-[#E8ECF4] rounded-lg px-[18px] py-4 text-[15px] text-[#1E1E1E] pr-16"
               placeholder="Confirm Password"
-              placeholderTextColor="#A8A8A8"
+              placeholderTextColor="#8391A1"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}
             />
             <TouchableOpacity
-              style={styles.eyeIcon}
+              className="absolute right-[18px] top-4"
               onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               <Ionicons 
                 name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} 
                 size={22} 
-                color="#A8A8A8" 
+                color="#8391A1" 
               />
             </TouchableOpacity>
           </View>
 
           {/* Reset Password Button */}
           <TouchableOpacity
-            style={[styles.resetButton, isLoading && styles.disabledButton]}
+            className={`rounded-lg py-4 items-center mt-5 ${isLoading ? 'bg-gray-300' : 'bg-[#5548E8]'}`}
             onPress={handleResetPassword}
             disabled={isLoading}
           >
-            <Text style={styles.resetButtonText}>
+            <Text className="text-white text-[15px] font-semibold">
               {isLoading ? 'Resetting...' : 'Reset Password'}
             </Text>
           </TouchableOpacity>
@@ -119,72 +122,3 @@ export default function ResetPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5ede2',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  backButton: {
-    marginLeft: 20,
-    marginTop: 10,
-    width: 40,
-    height: 40,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    paddingHorizontal: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E1E1E',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8B8B8B',
-    lineHeight: 22,
-    marginBottom: 35,
-  },
-  inputContainer: {
-    position: 'relative',
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 15,
-    color: '#1E1E1E',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 18,
-    top: 16,
-  },
-  resetButton: {
-    backgroundColor: '#4d61de',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  resetButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});

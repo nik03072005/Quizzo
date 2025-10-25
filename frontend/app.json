@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Quizzo",
+    "name": " ",
     "slug": "Quizzo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,14 +15,26 @@
       "adaptiveIcon": {
         "backgroundColor": "#f5ede2",
         "foregroundImage": "./assets/images/logo.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.Quizzo"
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/logo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload your school ID or report card.",
+          "cameraPermission": "The app accesses your camera to let you take a photo of your school ID or report card."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

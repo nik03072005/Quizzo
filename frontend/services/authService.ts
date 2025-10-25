@@ -2,69 +2,99 @@ import apiClient from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LoginResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: {
     id: string;
-    email: string;
+    name: string;
+    phoneNumber: string;
+    email?: string;
     displayName: string;
+    schoolId: string;
     photoURL?: string;
+    isPhoneVerified?: boolean;
+    isEmailVerified?: boolean;
   };
 }
 
+interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 interface RegisterData {
-  email: string;
+  phoneNumber: string;
+  otp: string;
   password: string;
-  displayName: string;
+  confirmPassword: string;
+  name: string;
+  email?: string;
+  schoolId: string;
 }
 
 interface LoginData {
-  email: string;
+  identifier: string; // can be email or phone
   password: string;
 }
 
 export const authService = {
-  // Register new user - Don't auto-login
+  // Send registration OTP
+  sendRegistrationOTP: async (phoneNumber: string): Promise<void> => {
+    await apiClient.post('/auth/send-registration-otp', { phoneNumber });
+  },
+
+  // Register new user with OTP verification
   register: async (data: RegisterData): Promise<LoginResponse> => {
     const response = await apiClient.post('/auth/register', data);
-    // Don't save token or user - user must login manually after registration
+    if (response.data.accessToken && response.data.refreshToken) {
+      await AsyncStorage.setItem('accessToken', response.data.accessToken);
+      await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
+      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+    }
     return response.data;
   },
 
   // Login user
   login: async (data: LoginData): Promise<LoginResponse> => {
     const response = await apiClient.post('/auth/login', data);
-    if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
+    if (response.data.accessToken && response.data.refreshToken) {
+      await AsyncStorage.setItem('accessToken', response.data.accessToken);
+      await AsyncStorage.setItem('refreshToken', response.data.refreshToken);
       await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;
   },
 
+  // Refresh access token
+  refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
+    const response = await apiClient.post('/auth/refresh-token', { refreshToken });
+    return response.data;
+  },
+
   // Logout user
   logout: async (): Promise<void> => {
-    await AsyncStorage.removeItem('authToken');
-    await AsyncStorage.removeItem('user');
+    await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
   },
 
   // Forgot password - Request OTP
-  forgotPassword: async (email: string): Promise<void> => {
-    await apiClient.post('/auth/forgot-password', { email });
+  forgotPassword: async (identifier: string): Promise<void> => {
+    await apiClient.post('/auth/forgot-password', { identifier });
   },
 
   // Verify OTP
-  verifyOTP: async (email: string, otp: string): Promise<{ verified: boolean }> => {
-    const response = await apiClient.post('/auth/verify-otp', { email, otp });
+  verifyOTP: async (identifier: string, otp: string): Promise<{ verified: boolean }> => {
+    const response = await apiClient.post('/auth/verify-otp', { identifier, otp });
     return response.data;
   },
 
   // Reset password
-  resetPassword: async (email: string, otp: string, newPassword: string): Promise<void> => {
-    await apiClient.post('/auth/reset-password', { email, otp, newPassword });
+  resetPassword: async (identifier: string, otp: string, newPassword: string): Promise<void> => {
+    await apiClient.post('/auth/reset-password', { identifier, otp, newPassword });
   },
 
   // Resend OTP
-  resendOTP: async (email: string): Promise<void> => {
-    await apiClient.post('/auth/resend-otp', { email });
+  resendOTP: async (identifier: string): Promise<void> => {
+    await apiClient.post('/auth/resend-otp', { identifier });
   },
 
   // Get current user

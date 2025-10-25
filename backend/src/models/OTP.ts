@@ -1,8 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOTP extends Document {
-  email: string;
+  email?: string;
+  phoneNumber?: string;
   otp: string;
+  type: 'email' | 'phone';
   expiresAt: Date;
   createdAt: Date;
 }
@@ -10,13 +12,23 @@ export interface IOTP extends Document {
 const OTPSchema: Schema = new Schema({
   email: {
     type: String,
-    required: true,
+    required: false,
     lowercase: true,
+    trim: true,
+  },
+  phoneNumber: {
+    type: String,
+    required: false,
     trim: true,
   },
   otp: {
     type: String,
     required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+    enum: ['email', 'phone'],
   },
   expiresAt: {
     type: Date,
@@ -29,8 +41,20 @@ const OTPSchema: Schema = new Schema({
   },
 });
 
+// Custom validation to ensure either email or phoneNumber is provided
+OTPSchema.pre('validate', function(next) {
+  if (!this.email && !this.phoneNumber) {
+    next(new Error('Either email or phoneNumber is required'));
+  } else if (this.email && this.phoneNumber) {
+    next(new Error('Only one of email or phoneNumber should be provided'));
+  } else {
+    next();
+  }
+});
+
 // Index for faster queries and auto-cleanup
 OTPSchema.index({ email: 1 });
+OTPSchema.index({ phoneNumber: 1 });
 OTPSchema.index({ expiresAt: 1 });
 
 export default mongoose.model<IOTP>('OTP', OTPSchema);

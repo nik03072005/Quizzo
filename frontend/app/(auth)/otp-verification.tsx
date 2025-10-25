@@ -1,16 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function OTPVerificationScreen() {
-  const { email, type } = useLocalSearchParams<{ email: string; type: string }>();
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const { identifier, email, type } = useLocalSearchParams<{ identifier?: string; email?: string; type: string }>();
+  const [otp, setOtp] = useState(['', '', '', '', '', '']); // Changed to 6 digits
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<TextInput[]>([]);
   const { verifyOTP, resendOTP } = useAuth();
+
+  // Use identifier if available, otherwise fall back to email for backward compatibility
+  const currentIdentifier = identifier || email || '';
 
   const handleOtpChange = (value: string, index: number) => {
     const newOtp = [...otp];
@@ -18,7 +21,7 @@ export default function OTPVerificationScreen() {
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -32,19 +35,19 @@ export default function OTPVerificationScreen() {
   const handleVerifyOTP = async () => {
     const otpCode = otp.join('');
     
-    if (otpCode.length !== 4) {
-      alert('Please enter the complete OTP');
+    if (otpCode.length !== 6) {
+      alert('Please enter the complete 6-digit OTP');
       return;
     }
 
     setIsLoading(true);
     try {
-      const verified = await verifyOTP(email, otpCode);
+      const verified = await verifyOTP(currentIdentifier, otpCode);
       
       if (verified && type === 'forgot-password') {
         router.push({
           pathname: '/(auth)/reset-password',
-          params: { email, code: otpCode }
+          params: { identifier: currentIdentifier, code: otpCode }
         });
       } else if (verified) {
         // Registration OTP verification
@@ -60,41 +63,42 @@ export default function OTPVerificationScreen() {
 
   const handleResendOTP = async () => {
     try {
-      await resendOTP(email);
+      await resendOTP(currentIdentifier);
       alert('OTP sent successfully!');
-      setOtp(['', '', '', '']);
+      setOtp(['', '', '', '', '', '']);
     } catch (error: any) {
       alert(error.message || 'Failed to resend OTP');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-[#f5ede2]" edges={['top']}>
+      <ScrollView className="flex-grow pb-5" showsVerticalScrollIndicator={false}>
         {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity className="ml-5 mt-2.5 w-10 h-10 bg-white rounded-full items-center justify-center" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E1E1E" />
         </TouchableOpacity>
 
         {/* Content */}
-        <View style={styles.content}>
-        <Text style={styles.title}>OTP Verification</Text>
-        <Text style={styles.subtitle}>
-          Enter the verification code we just sent on your email address.
+        <View className="px-7">
+        <Text className="text-[28px] font-bold text-[#1E1E1E] mb-3">OTP Verification</Text>
+        <Text className="text-[15px] text-[#8391A1] leading-[22px] mb-[35px]">
+          Enter the verification code we just sent on your email address or phone number.
         </Text>
 
         {/* OTP Input */}
-        <View style={styles.otpContainer}>
+        <View className="flex-row justify-between mb-[35px]">
           {otp.map((digit, index) => (
             <TextInput
               key={index}
               ref={(ref) => {
                 if (ref) inputRefs.current[index] = ref;
               }}
-              style={[
-                styles.otpInput,
-                digit ? styles.otpInputFilled : null
-              ]}
+              className={`w-[45px] h-[60px] text-xl font-bold text-[#1E1E1E] text-center rounded-lg ${
+                digit 
+                  ? 'bg-[#F0FFFE] border border-[#35C2C1]' 
+                  : 'bg-[#F7F8F9] border border-[#E8ECF4]'
+              }`}
               value={digit}
               onChangeText={(value) => handleOtpChange(value, index)}
               onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
@@ -107,20 +111,20 @@ export default function OTPVerificationScreen() {
 
         {/* Verify Button */}
         <TouchableOpacity
-          style={[styles.verifyButton, isLoading && styles.disabledButton]}
+          className={`rounded-lg py-4 items-center mb-[35px] ${isLoading ? 'bg-gray-300' : 'bg-[#5548E8]'}`}
           onPress={handleVerifyOTP}
           disabled={isLoading}
         >
-          <Text style={styles.verifyButtonText}>
+          <Text className="text-white text-[15px] font-semibold">
             {isLoading ? 'Verifying...' : 'Verify'}
           </Text>
         </TouchableOpacity>
 
         {/* Resend Code */}
-        <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>Didn&apos;t received code? </Text>
+        <View className="flex-row justify-center items-center">
+          <Text className="text-[#1E1E1E] text-sm">Didn&apos;t received code? </Text>
           <TouchableOpacity onPress={handleResendOTP}>
-            <Text style={styles.resendLink}>Resend</Text>
+            <Text className="text-[#35C2C1] text-sm font-bold">Resend</Text>
           </TouchableOpacity>
         </View>
         </View>
@@ -129,87 +133,3 @@ export default function OTPVerificationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5ede2',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  backButton: {
-    marginLeft: 20,
-    marginTop: 10,
-    width: 40,
-    height: 40,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    paddingHorizontal: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E1E1E',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8B8B8B',
-    lineHeight: 22,
-    marginBottom: 35,
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 35,
-  },
-  otpInput: {
-    width: 70,
-    height: 60,
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 8,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1E1E1E',
-  },
-  otpInputFilled: {
-    borderColor: '#35C2C1',
-    backgroundColor: '#F0FFFE',
-  },
-  verifyButton: {
-    backgroundColor: '#4d61de',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 35,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  verifyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resendText: {
-    color: '#1E1E1E',
-    fontSize: 14,
-  },
-  resendLink: {
-    color: '#35C2C1',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});

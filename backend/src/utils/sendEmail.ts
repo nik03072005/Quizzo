@@ -3,12 +3,12 @@ import nodemailer from 'nodemailer';
 // Create email transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 };
@@ -19,7 +19,7 @@ export const sendOTPEmail = async (email: string, otp: string): Promise<void> =>
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `"Quizzo App" <${process.env.EMAIL_USER}>`,
+      from: `"Quizzo App" <${process.env.SMTP_EMAIL}>`,
       to: email,
       subject: 'Quizzo - Password Reset OTP',
       html: `
